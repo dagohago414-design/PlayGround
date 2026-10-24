@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#8fd8ee" />
+  <meta name="description" content="Pokémon Wildbound — explore a sunlit 3D meadow, battle wild creatures, and catch them all on phone, tablet or desktop." />
+  <title>Pokémon Wildbound — 3D Pocket Creature Adventure</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23f7f4ea' stroke='%23223033' stroke-width='6'/%3E%3Cpath d='M4 32h56' stroke='%23223033' stroke-width='6'/%3E%3Cpath d='M32 4a28 28 0 0 0 0 56' fill='%23e9514d'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%23f7f4ea' stroke='%23223033' stroke-width='5'/%3E%3C/svg%3E" />
+  <script type="module" crossorigin src="./assets/index-Bo9ICcpA.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Dmd5muno.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Pokémon Wildbound 3D game world"></canvas>
+  <div class="vignette"></div>
+
+  <div id="loader" class="loader">
+    <div class="loader-orb"><span></span></div>
+    <div class="loader-title">POKÉMON <b>WILDBOUND</b></div>
+    <div class="loader-sub">Growing the meadow...</div>
+  </div>
+
+  <section id="titleScreen" class="title-screen">
+    <div class="title-shade"></div>
+    <div class="title-wrap">
+      <div class="eyebrow"><span class="pill-dot"></span> OPEN-WORLD POCKET CREATURE ADVENTURE</div>
+      <div class="logo">
+        <div class="logo-kicker">POKÉMON</div>
+        <h1>WILDBOUND</h1>
+        <div class="logo-sub">MONSTERS OF THE MEADOW</div>
+      </div>
+      <p class="title-copy">
+        Wander sunlit meadows, befriend wild creatures, and battle for the heart of the valley.
+      </p>
+      <div class="play-row">
+        <button id="playBtn" class="play-btn" type="button" aria-label="Play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+          <span>Play</span>
+          <small>Free adventure</small>
+        </button>
+        <button id="titleTeamBtn" class="ghost-btn" type="button" aria-label="Open field guide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v18H6.5A2.5 2.5 0 0 1 4 18.5zM7 7h9M7 11h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Field guide
+        </button>
+      </div>
+      <div class="feature-row">
+        <span><i class="mini-icon world"></i> 6 wild species</span>
+        <span><i class="mini-icon battle"></i> Turn-based battles</span>
+        <span><i class="mini-icon catch"></i> Catch &amp; collect</span>
+      </div>
+      <div class="title-controls">
+        <span><kbd>WASD</kbd> move</span><span><kbd>Drag</kbd> look</span><span><kbd>A</kbd> interact</span><span class="mobile-only"><kbd>Touch</kbd> ready</span>
+      </div>
+    </div>
+    <aside class="title-card">
+      <div class="title-card-top">
+        <span>STARTER PARTNER</span><span class="live-dot"></span>
+      </div>
+      <div class="title-card-art">
+        <div class="title-glow"></div>
+        <img id="titleCreature" alt="Emberpaw, the ember fox" />
+      </div>
+      <div class="title-card-info">
+        <div><b>Emberpaw</b><span>Ember Fox</span></div>
+        <span class="type-chip fire">Fire</span>
+      </div>
+      <div class="title-card-stats">
+        <div><span>HP</span><b>66</b></div>
+        <div><span>PWR</span><b>62</b></div>
+        <div><span>BOND</span><b>MAX</b></div>
+      </div>
+    </aside>
+    <div class="title-badge">3D · PHONE / TABLET / DESKTOP</div>
+    <div class="title-credit">A fan-made pocket creature adventure · original creatures &amp; world</div>
+  </section>
+
+  <div id="hud" class="hud hidden">
+    <div class="brand-chip" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3a9 9 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      <span>WILDBOUND</span>
+    </div>
+
+    <div class="hud-top">
+      <div class="stat-card dex-card">
+        <div class="dex-orb">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 12h6m6 0h6" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        </div>
+        <div class="stat-text"><span>POKÉDEX</span><b id="dexCount">1 / 6</b></div>
+      </div>
+
+      <div class="quest-card">
+        <div class="quest-head">
+          <span class="quest-kicker">MEADOW EXPEDITION</span>
+          <span class="quest-progress" id="questProgress">1 / 6</span>
+        </div>
+        <div class="quest-title" id="questText">Catch every wild species</div>
+        <div class="quest-dots" id="questDots"></div>
+      </div>
+
+      <div class="top-actions">
+        <button id="teamBtn" class="icon-btn team-btn" type="button" aria-label="Open team and field guide">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.4 12h17.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>Team</span>
+        </button>
+        <button id="soundBtn" class="icon-btn round" type="button" aria-label="Toggle sound">
+          <svg class="icon-sound-on" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5zM16 8.6a5 5 0 0 1 0 6.8M18.4 6a8.3 8.3 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="icon-sound-off" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5zM16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button id="helpBtn" class="icon-btn round" type="button" aria-label="Help and controls">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.4 9.1a2.7 2.7 0 1 1 4 2.4c-.9.5-1.4 1.1-1.4 2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="orb-hud">
+      <span class="orb-glyph"><i></i></span>
+      <span class="orb-count" id="orbCount">12</span>
+      <span class="orb-label">WILD ORBS</span>
+    </div>
+
+    <div class="location-chip" id="locationChip">
+      <svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span id="locationText">Wildbound Meadow</span>
+    </div>
+
+    <div id="interaction" class="interaction hidden">
+      <kbd>A</kbd>
+      <span id="interactionText">Challenge Emberpaw</span>
+    </div>
+
+    <div id="joystick" class="joystick" aria-label="Movement joystick">
+      <div class="joystick-ring"></div>
+      <div class="joystick-knob" id="joystickKnob"></div>
+    </div>
+
+    <div class="action-cluster">
+      <button id="jumpBtn" class="jump-btn" type="button" aria-label="Jump">
+        <svg viewBox="0 0 24 24"><path d="M12 19V5m0 0l-5 5m5-5l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="actionBtn" class="action-btn" type="button" aria-label="Interact">
+        <span class="action-key">A</span>
+        <span class="action-label" id="actionLabel">Interact</span>
+      </button>
+    </div>
+
+    <div class="hint-bar">
+      <span><kbd>WASD</kbd> move</span>
+      <span><kbd>Shift</kbd> run</span>
+      <span><kbd>Space</kbd> jump</span>
+      <span><kbd>Drag</kbd> look</span>
+      <span><kbd>A</kbd> interact</span>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <div id="objectiveToast" class="objective-toast"></div>
+  </div>
+
+  <section id="battleUI" class="battle-ui hidden">
+    <div class="battle-topbar">
+      <div class="battle-chip"><span class="pulse"></span> WILD ENCOUNTER</div>
+      <div class="battle-turn" id="battleTurn">YOUR TURN</div>
+      <div class="battle-place">WILDBOUND MEADOW</div>
+    </div>
+
+    <div class="combatant enemy-card" id="enemyCard">
+      <div class="combatant-head">
+        <div class="combatant-name"><span id="enemyName">Sproutle</span><span class="level" id="enemyLevel">Lv 5</span></div>
+        <span class="type-badge" id="enemyType">Grass</span>
+      </div>
+      <div class="hp-row"><span class="hp-label">HP</span><div class="hp-track"><div class="hp-fill" id="enemyHpBar"></div></div></div>
+      <div class="hp-text" id="enemyHpText">80 / 80</div>
+    </div>
+
+    <div class="combatant player-card" id="playerCard">
+      <div class="combatant-head">
+        <div class="combatant-name"><span id="playerName">Emberpaw</span><span class="level" id="playerLevel">Lv 5</span></div>
+        <span class="type-badge" id="playerType">Fire</span>
+      </div>
+      <div class="hp-row"><span class="hp-label">HP</span><div class="hp-track"><div class="hp-fill" id="playerHpBar"></div></div></div>
+      <div class="hp-text" id="playerHpText">81 / 81</div>
+    </div>
+
+    <div class="battle-panel">
+      <div class="battle-log" id="battleLog"><span class="log-text">Choose a move.</span></div>
+      <div class="battle-actions">
+        <div class="orb-column">
+          <button id="catchBtn" class="orb-btn" type="button">
+            <span class="orb-glyph big"><i></i></span>
+            <span class="orb-btn-text"><b>Wild Orb</b><small>× <em id="orbCountBattle">12</em></small></span>
+          </button>
+          <button id="runBtn" class="run-btn" type="button">Run away</button>
+        </div>
+        <div id="moveGrid" class="move-grid"></div>
+      </div>
+    </div>
+
+    <div id="battleBanner" class="battle-banner"></div>
+    <div id="damageLayer" class="damage-layer"></div>
+  </section>
+
+  <section id="teamModal" class="modal hidden">
+    <div class="modal-card team-card">
+      <button class="modal-close" id="teamClose" type="button" aria-label="Close team">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="modal-kicker">YOUR EXPEDITION</div>
+      <h2>Team &amp; Field Guide</h2>
+      <p class="modal-sub">Pick a partner for the meadow. Rest at the campfire to heal everyone.</p>
+      <div class="team-section-head"><span>Active team</span><span id="teamCount">1 / 6</span></div>
+      <div id="teamGrid" class="team-grid"></div>
+      <div class="team-section-head dex-head"><span>Pokédex</span><span id="dexModalCount">1 / 6 discovered</span></div>
+      <div id="dexGrid" class="dex-grid"></div>
+    </div>
+  </section>
+
+  <section id="helpModal" class="modal hidden">
+    <div class="modal-card help-card">
+      <button class="modal-close" id="helpClose" type="button" aria-label="Close help">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="modal-kicker">FIELD NOTES</div>
+      <h2>How to explore</h2>
+      <div class="help-grid">
+        <div class="help-item"><span class="help-icon">01</span><div><b>Move &amp; look</b><p>WASD or the touch joystick to move. Drag the world to orbit the camera. Shift or a full joystick push to run.</p></div></div>
+        <div class="help-item"><span class="help-icon">02</span><div><b>Find wild creatures</b><p>Little creatures wander the meadow, pond, stone circle and hill. Walk close, then press <kbd>A</kbd> or tap Interact.</p></div></div>
+        <div class="help-item"><span class="help-icon">03</span><div><b>Battle &amp; catch</b><p>Pick a move, whittle down HP, then throw a Wild Orb. Lower HP means a better catch. Wins earn more orbs.</p></div></div>
+        <div class="help-item"><span class="help-icon">04</span><div><b>Rest &amp; collect</b><p>The campfire heals your whole team. Catch all six species to complete the Meadow Expedition.</p></div></div>
+      </div>
+      <div class="help-keys">
+        <span><kbd>WASD</kbd> move</span><span><kbd>Shift</kbd> run</span><span><kbd>Space</kbd> jump</span><span><kbd>E</kbd> / <kbd>A</kbd> interact</span><span><kbd>1–4</kbd> battle moves</span><span><kbd>C</kbd> throw orb</span><span><kbd>M</kbd> mute</span>
+      </div>
+      <button class="modal-primary" id="helpDone" type="button">Back to the meadow</button>
+    </div>
+  </section>
+
+</body>
+</html>
