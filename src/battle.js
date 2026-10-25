@@ -205,6 +205,7 @@ export class Battle {
     this.playerModel = null
     this.enemyModel = null
     this.ends = null
+    this.admin = null
     this.buildScene()
     this.bindDOM()
   }
@@ -350,7 +351,7 @@ export class Battle {
   setBusy(busy) {
     this.turnBusy = busy
     for (const b of this.dom.moves.querySelectorAll('button')) b.disabled = busy
-    this.dom.catchBtn.disabled = busy || this.cb.getOrbs() <= 0
+    this.dom.catchBtn.disabled = busy || (!this.admin?.infiniteOrbs && this.cb.getOrbs() <= 0)
     this.dom.runBtn.disabled = busy
     if (!busy) this.dom.turn.textContent = 'YOUR TURN'
   }
@@ -552,7 +553,7 @@ export class Battle {
   }
 
   showDamage(amount, model, crit) {
-    if (!model) return
+    if (!model || amount <= 0) return
     const pos = model.position.clone()
     pos.y += 3.0
     pos.project(this.camera)
@@ -591,7 +592,9 @@ export class Battle {
     this.log(`<b>${playerSpecies.name}</b> used <b>${move.name}</b>!`)
     this.audio.select()
     await this.lunge(this.playerModel, this.enemyModel)
-    const { damage, mult, crit } = this.calcDamage(this.playerUnit, this.enemyUnit, move)
+    const hit = this.calcDamage(this.playerUnit, this.enemyUnit, move)
+    const damage = this.admin?.oneHit ? this.enemyUnit.hp : hit.damage
+    const { mult, crit } = hit
     await this.hitModel(this.enemyUnit, 'enemy', damage, move.type, crit)
     this.log(
       (crit ? 'A critical hit! ' : '') +
@@ -618,7 +621,9 @@ export class Battle {
     this.log(`<b>${enemySpecies.name}</b> used <b>${move.name}</b>!`, 'enemy')
     await wait(420)
     await this.lunge(this.enemyModel, this.playerModel)
-    const { damage, mult, crit } = this.calcDamage(this.enemyUnit, this.playerUnit, move)
+    const hit = this.calcDamage(this.enemyUnit, this.playerUnit, move)
+    const damage = this.admin?.invincible ? 0 : hit.damage
+    const { mult, crit } = hit
     await this.hitModel(this.playerUnit, 'player', damage, move.type, crit)
     this.log(
       (crit ? 'A critical hit! ' : '') +
@@ -680,7 +685,7 @@ export class Battle {
 
   async tryCatch() {
     if (this.state !== 'player' || this.turnBusy) return
-    if (this.cb.getOrbs() <= 0) {
+    if (!this.admin?.infiniteOrbs && this.cb.getOrbs() <= 0) {
       this.log('You are out of Wild Orbs! Win battles to earn more.')
       return
     }
@@ -689,7 +694,7 @@ export class Battle {
     this.state = 'busy'
     this.setBusy(true)
     this.dom.turn.textContent = 'THROWING'
-    this.cb.useOrb()
+    if (!this.admin?.infiniteOrbs) this.cb.useOrb()
     this.setOrbs(this.cb.getOrbs())
     const enemySpecies = byId[this.enemyUnit.speciesId]
     this.log(`You threw a Wild Orb at <b>${enemySpecies.name}</b>!`)
@@ -730,7 +735,7 @@ export class Battle {
 
     const missing = 1 - this.enemyUnit.hp / this.enemyUnit.maxHp
     const chance = clamp(0.3 + missing * 0.52 + (this.playerUnit.level - this.enemyUnit.level) * 0.015, 0.22, 0.94)
-    const success = Math.random() < chance
+    const success = this.admin?.perfectCatch ? true : Math.random() < chance
     const shakes = success ? 3 : Math.random() < 0.5 ? 1 : 2
 
     for (let i = 0; i < 3; i++) {

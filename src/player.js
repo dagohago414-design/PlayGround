@@ -12,6 +12,9 @@ export class Player {
     this.jumpHeight = 0
     this.grounded = true
     this.stepTimer = 0
+    this.speedMultiplier = 1
+    this.jumpMultiplier = 1
+    this.noclip = false
     this.group = new THREE.Group()
     this.rig = new THREE.Group()
     this.group.add(this.rig)
@@ -141,7 +144,7 @@ export class Player {
     if (moving) move.normalize()
 
     const running = input.run && moving
-    const targetSpeed = moving ? (running ? 8.4 : 4.9) : 0
+    const targetSpeed = moving ? (running ? 8.4 : 4.9) * this.speedMultiplier : 0
     const accel = moving ? 13 : 18
     this.speed = damp(this.speed, targetSpeed, accel, dt)
     const dirX = moving ? move.x : 0
@@ -158,13 +161,13 @@ export class Player {
       nx = nx / distC * maxR
       nz = nz / distC * maxR
     }
-    if (!this.world.isBlocked(nx, this.position.z, radius)) this.position.x = nx
+    if (this.noclip || !this.world.isBlocked(nx, this.position.z, radius)) this.position.x = nx
     else this.velocity.x *= 0.2
-    if (!this.world.isBlocked(this.position.x, nz, radius)) this.position.z = nz
+    if (this.noclip || !this.world.isBlocked(this.position.x, nz, radius)) this.position.z = nz
     else this.velocity.y *= 0.2
 
     if (input.jump && this.grounded) {
-      this.jumpVelocity = 5.6
+      this.jumpVelocity = 5.6 * this.jumpMultiplier
       this.grounded = false
     }
     if (!this.grounded) {

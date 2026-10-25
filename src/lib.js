@@ -195,7 +195,8 @@ export function disposeObject(object) {
 export function typeColor(type) {
   return {
     fire: 0xff7a3d, water: 0x38a9f0, grass: 0x57c96a, electric: 0xf5c518,
-    rock: 0xa9a28f, flying: 0x9d8cf2, normal: 0xc7bfae
+    rock: 0xa9a28f, flying: 0x9d8cf2, ice: 0x74d8ec, bug: 0x9fbe3c,
+    ghost: 0x8c78c8, dragon: 0x6f72ea, fairy: 0xf08fc8, normal: 0xc7bfae
   }[type] ?? 0xc7bfae
 }
 

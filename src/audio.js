@@ -87,7 +87,10 @@ export class AudioEngine {
   }
 
   hit(type = 'normal') {
-    const base = { fire: 180, water: 300, grass: 240, electric: 420, rock: 120, flying: 360, normal: 200 }[type] || 200
+    const base = {
+      fire: 180, water: 300, grass: 240, electric: 420, rock: 120, flying: 360,
+      ice: 520, bug: 290, ghost: 150, dragon: 260, fairy: 610, normal: 200
+    }[type] || 200
     this.noise(0.22, { gain: 0.22, filter: 1800 })
     this.tone(base, 0.2, { type: 'sawtooth', gain: 0.15, slide: -base * 0.6 })
     this.tone(base * 2, 0.12, { type: 'square', gain: 0.06, delay: 0.02, slide: -base * 0.4 })

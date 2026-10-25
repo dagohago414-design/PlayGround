@@ -6,6 +6,7 @@ import { Battle } from './battle.js'
 import { AudioEngine } from './audio.js'
 import { SPECIES, byId, STARTER_ID, START_ORBS, TYPES } from './config.js'
 import { clamp, damp, labelTexture, pick, rand, typeColor } from './lib.js'
+import { initAdmin } from './admin.js'
 
 const $ = id => document.getElementById(id)
 
@@ -22,7 +23,25 @@ const state = {
   grassTimer: 0,
   muted: false,
   caughtMessage: '',
-  celebrated: false
+  celebrated: false,
+  admin: {
+    speed: false,
+    autoRun: false,
+    moonJump: false,
+    giantPlayer: false,
+    tinyPlayer: false,
+    noclip: false,
+    giantFollower: false,
+    perfectCatch: false,
+    invincible: false,
+    oneHit: false,
+    infiniteOrbs: false,
+    weakEnemies: false,
+    strongEnemies: false,
+    giantWilds: false,
+    tinyWilds: false,
+    freezeWilds: false
+  }
 }
 
 try {
@@ -90,6 +109,7 @@ let follower = null
 function createFollower(speciesId) {
   if (follower) scene.remove(follower.group)
   follower = createCreature(speciesId, { scale: 0.72 })
+  follower.group.scale.setScalar(state.admin.giantFollower ? 1.65 : 1)
   follower.group.position.set(player.position.x + 1.2, world.heightAt(player.position.x + 1.2, player.position.z + 1.6), player.position.z + 1.6)
   follower.group.rotation.y = player.facing
   attachShadowBlob(follower)
@@ -110,6 +130,8 @@ const wilds = []
 function makeWild(spawn) {
   const species = byId[spawn.species]
   const c = createCreature(spawn.species, { scale: species.scale })
+  const wildScale = state.admin.giantWilds ? 1.65 : state.admin.tinyWilds ? 0.55 : 1
+  c.group.scale.setScalar(wildScale)
   const y = world.heightAt(spawn.x, spawn.z)
   c.group.position.set(spawn.x, y, spawn.z)
   c.group.rotation.y = rand(0, Math.PI * 2)
@@ -198,6 +220,11 @@ function updateWilds(dt, time) {
     wild.marker.scale.setScalar(wild.markerT * 0.9)
     wild.marker.position.y = 2.32 + Math.sin(time * 3.2 + wild.spawn.x) * 0.1
     wild.ring.material.opacity = near ? 0.65 : 0.32 + Math.sin(time * 2 + wild.spawn.z) * 0.08
+
+    if (state.admin.freezeWilds) {
+      animateCreature(wild.creature, time, false, 1, { flying: species.type === 'flying' })
+      continue
+    }
 
     if (near) {
       const targetAngle = Math.atan2(dxP, dzP)
@@ -405,7 +432,7 @@ function readInput() {
     y = move.y
   }
   const magnitude = Math.hypot(x, y)
-  const run = keys.has('ShiftLeft') || keys.has('ShiftRight') || magnitude > 0.92
+  const run = state.admin.autoRun || keys.has('ShiftLeft') || keys.has('ShiftRight') || magnitude > 0.92
   const jump = jumpPressed
   jumpPressed = false
   return { x, y, run, jump }
@@ -541,6 +568,8 @@ function activeUnit() {
 // ---------------------------------------------------------------------------
 const teamModal = $('teamModal')
 const helpModal = $('helpModal')
+const codeModal = $('codeModal')
+const adminModal = $('adminModal')
 
 function openModal(which) {
   if (state.mode === 'battle' || state.mode === 'modal') return
@@ -555,6 +584,8 @@ function openModal(which) {
 function closeModals() {
   teamModal.classList.add('hidden')
   helpModal.classList.add('hidden')
+  codeModal.classList.add('hidden')
+  adminModal.classList.add('hidden')
   if (state.mode === 'modal') state.mode = state.previousMode === 'title' ? 'title' : 'explore'
   audio.click()
 }
@@ -658,7 +689,7 @@ let battle = null
 const battleCallbacks = {
   getOrbs: () => state.orbs,
   useOrb: () => {
-    state.orbs = Math.max(0, state.orbs - 1)
+    if (!state.admin.infiniteOrbs) state.orbs = Math.max(0, state.orbs - 1)
     updateHud()
     if (battle) battle.setOrbs(state.orbs)
   },
@@ -702,6 +733,83 @@ function registerCatch(enemy) {
   updateHud()
 }
 
+function grantSpecies(speciesId, level = 5, addToParty = true) {
+  const species = byId[speciesId]
+  if (!species) return null
+  const isNew = !state.owned.has(speciesId)
+  state.owned.add(speciesId)
+  let added = false
+  if (addToParty && state.party.length < 6) {
+    state.party.push(createUnit(speciesId, level))
+    added = true
+  }
+  if (!teamModal.classList.contains('hidden')) renderTeam()
+  updateHud()
+  return { name: species.name, isNew, added }
+}
+
+function setPartyTo(ids, level = 10) {
+  const valid = ids.filter(id => byId[id]).slice(0, 6)
+  if (!valid.length) return false
+  state.party.length = 0
+  for (const id of valid) {
+    state.owned.add(id)
+    state.party.push(createUnit(id, level))
+  }
+  state.activeIndex = 0
+  createFollower(state.party[0].speciesId)
+  if (!teamModal.classList.contains('hidden')) renderTeam()
+  updateHud()
+  return true
+}
+
+function levelParty(level) {
+  for (const unit of state.party) {
+    const species = byId[unit.speciesId]
+    unit.level = level
+    unit.maxHp = Math.max(24, Math.round(species.baseHp + level * 3.4))
+    unit.hp = unit.maxHp
+  }
+  if (!teamModal.classList.contains('hidden')) renderTeam()
+  updateHud()
+}
+
+function spawnWildAt(speciesId, level = 5) {
+  if (!byId[speciesId]) return null
+  let spot = null
+  for (let i = 0; i < 18; i++) {
+    const angle = rand(0, Math.PI * 2)
+    const radius = rand(2.6, 5.2)
+    const x = player.position.x + Math.cos(angle) * radius
+    const z = player.position.z + Math.sin(angle) * radius
+    if (Math.hypot(x, z) > 72 || world.isBlocked(x, z, 0.5)) continue
+    spot = { x, z }
+    break
+  }
+  if (!spot) spot = { x: player.position.x + 2.8, z: player.position.z + 2.8 }
+  return makeWild({ species: speciesId, x: spot.x, z: spot.z, level, radius: 1.8 })
+}
+
+function teleportPlayer(x, z) {
+  player.position.set(x, 0, z)
+  player.group.position.set(x, world.heightAt(x, z), z)
+  player.jumpHeight = 0
+  player.jumpVelocity = 0
+  state.interaction = null
+  camState.first = true
+}
+
+function startAdminBattle() {
+  const candidates = wilds
+    .filter(w => w.active)
+    .sort((a, b) => Math.hypot(a.group.position.x - player.position.x, a.group.position.z - player.position.z) -
+      Math.hypot(b.group.position.x - player.position.x, b.group.position.z - player.position.z))
+  if (!candidates.length) return false
+  closeModals()
+  setTimeout(() => startBattle(candidates[0]), 90)
+  return true
+}
+
 function startBattle(wild) {
   if (state.mode !== 'explore') return
   if (!wild || !wild.active) return
@@ -723,12 +831,16 @@ function startBattle(wild) {
   state.interaction = null
   const species = byId[wild.spawn.species]
   const level = wild.level
+  let maxHp = Math.max(24, Math.round(species.baseHp + level * 3.4))
+  if (state.admin.weakEnemies) maxHp = Math.max(8, Math.round(maxHp * 0.3))
+  else if (state.admin.strongEnemies) maxHp = Math.round(maxHp * 2.2)
   const enemy = {
     speciesId: wild.spawn.species,
     level,
-    maxHp: Math.max(24, Math.round(species.baseHp + level * 3.4)),
-    hp: Math.max(24, Math.round(species.baseHp + level * 3.4))
+    maxHp,
+    hp: maxHp
   }
+  battle.admin = state.admin
   battle.setViewport(window.innerWidth, window.innerHeight)
   battle.setOrbs(state.orbs)
   battle.start(enemy, state.party[state.activeIndex])
@@ -776,7 +888,7 @@ function finishBattle(result) {
   if (state.owned.size === SPECIES.length && !state.celebrated) {
     state.celebrated = true
     setTimeout(() => {
-      showObjective('EXPEDITION COMPLETE · All six wild species discovered!', 5200)
+      showObjective(`EXPEDITION COMPLETE · All ${SPECIES.length} wild species discovered!`, 5200)
       audio.victory()
     }, 900)
   }
@@ -865,7 +977,7 @@ function interact() {
   }
   audio.select()
   if (current.type === 'sign') {
-    showToast('WILDBOUND MEADOW · Six wild species roam here. The campfire restores your team.')
+    showToast(`WILDBOUND MEADOW · ${SPECIES.length} wild species roam here. The campfire restores your team.`)
   } else if (current.type === 'crystal') {
     showToast('A humming moss crystal. It feels warm, like a sleeping creature.')
   }
@@ -956,7 +1068,7 @@ function startGame() {
   player.facing = Math.PI
   player.group.rotation.y = Math.PI
   updateHud()
-  setTimeout(() => showObjective('MEADOW EXPEDITION · Catch all 6 wild species', 4200), 650)
+  setTimeout(() => showObjective(`MEADOW EXPEDITION · Catch all ${SPECIES.length} wild species`, 4200), 650)
 }
 $('playBtn').addEventListener('click', startGame)
 
@@ -1007,4 +1119,14 @@ function loop() {
 
 updateHud()
 updateCamera(1 / 60, 0)
+initAdmin({
+  state, world, player, scene, camState, audio, wilds, $, byId,
+  createUnit, createFollower, updateHud, renderTeam, closeModals,
+  grantSpecies, setPartyTo, levelParty, spawnWildAt, startAdminBattle, teleportPlayer, activeUnit,
+  getBattle: () => battle,
+  getFollower: () => follower,
+  despawnWild,
+  respawnWild,
+  teamModalOpen: () => !teamModal.classList.contains('hidden')
+})
 loop()

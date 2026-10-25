@@ -7,8 +7,8 @@
   <meta name="description" content="Pokémon Wildbound — explore a sunlit 3D meadow, battle wild creatures, and catch them all on phone, tablet or desktop." />
   <title>Pokémon Wildbound — 3D Pocket Creature Adventure</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23f7f4ea' stroke='%23223033' stroke-width='6'/%3E%3Cpath d='M4 32h56' stroke='%23223033' stroke-width='6'/%3E%3Cpath d='M32 4a28 28 0 0 0 0 56' fill='%23e9514d'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%23f7f4ea' stroke='%23223033' stroke-width='5'/%3E%3C/svg%3E" />
-  <script type="module" crossorigin src="./assets/index-Bo9ICcpA.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Dmd5muno.css">
+  <script type="module" crossorigin src="./assets/index-C6oV1B5C.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D5_dxxgO.css">
 </head>
 <body>
   <canvas id="game" aria-label="Pokémon Wildbound 3D game world"></canvas>
@@ -44,7 +44,7 @@
         </button>
       </div>
       <div class="feature-row">
-        <span><i class="mini-icon world"></i> 6 wild species</span>
+        <span><i class="mini-icon world"></i> 21 wild species</span>
         <span><i class="mini-icon battle"></i> Turn-based battles</span>
         <span><i class="mini-icon catch"></i> Catch &amp; collect</span>
       </div>
@@ -85,13 +85,13 @@
         <div class="dex-orb">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 12h6m6 0h6" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
         </div>
-        <div class="stat-text"><span>POKÉDEX</span><b id="dexCount">1 / 6</b></div>
+        <div class="stat-text"><span>POKÉDEX</span><b id="dexCount">1 / 21</b></div>
       </div>
 
       <div class="quest-card">
         <div class="quest-head">
           <span class="quest-kicker">MEADOW EXPEDITION</span>
-          <span class="quest-progress" id="questProgress">1 / 6</span>
+          <span class="quest-progress" id="questProgress">1 / 21</span>
         </div>
         <div class="quest-title" id="questText">Catch every wild species</div>
         <div class="quest-dots" id="questDots"></div>
@@ -101,6 +101,14 @@
         <button id="teamBtn" class="icon-btn team-btn" type="button" aria-label="Open team and field guide">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.4 12h17.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
           <span>Team</span>
+        </button>
+        <button id="codeBtn" class="icon-btn code-btn" type="button" aria-label="Enter access code">
+          <svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11.6 12H21M17.2 12v3.1M20.3 12v2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Code</span>
+        </button>
+        <button id="adminBtn" class="icon-btn admin-btn hidden" type="button" aria-label="Open admin powers">
+          <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5.2c0 4.8-2.9 7.8-7 9.8-4.1-2-7-5-7-9.8V6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8.2v5.1M9.6 10.8h4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Admin</span>
         </button>
         <button id="soundBtn" class="icon-btn round" type="button" aria-label="Toggle sound">
           <svg class="icon-sound-on" viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5zM16 8.6a5 5 0 0 1 0 6.8M18.4 6a8.3 8.3 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -208,7 +216,7 @@
       <p class="modal-sub">Pick a partner for the meadow. Rest at the campfire to heal everyone.</p>
       <div class="team-section-head"><span>Active team</span><span id="teamCount">1 / 6</span></div>
       <div id="teamGrid" class="team-grid"></div>
-      <div class="team-section-head dex-head"><span>Pokédex</span><span id="dexModalCount">1 / 6 discovered</span></div>
+      <div class="team-section-head dex-head"><span>Pokédex</span><span id="dexModalCount">1 / 21 discovered</span></div>
       <div id="dexGrid" class="dex-grid"></div>
     </div>
   </section>
@@ -224,12 +232,51 @@
         <div class="help-item"><span class="help-icon">01</span><div><b>Move &amp; look</b><p>WASD or the touch joystick to move. Drag the world to orbit the camera. Shift or a full joystick push to run.</p></div></div>
         <div class="help-item"><span class="help-icon">02</span><div><b>Find wild creatures</b><p>Little creatures wander the meadow, pond, stone circle and hill. Walk close, then press <kbd>A</kbd> or tap Interact.</p></div></div>
         <div class="help-item"><span class="help-icon">03</span><div><b>Battle &amp; catch</b><p>Pick a move, whittle down HP, then throw a Wild Orb. Lower HP means a better catch. Wins earn more orbs.</p></div></div>
-        <div class="help-item"><span class="help-icon">04</span><div><b>Rest &amp; collect</b><p>The campfire heals your whole team. Catch all six species to complete the Meadow Expedition.</p></div></div>
+        <div class="help-item"><span class="help-icon">04</span><div><b>Rest &amp; collect</b><p>The campfire heals your whole team. Catch all 21 species to complete the Meadow Expedition.</p></div></div>
       </div>
       <div class="help-keys">
         <span><kbd>WASD</kbd> move</span><span><kbd>Shift</kbd> run</span><span><kbd>Space</kbd> jump</span><span><kbd>E</kbd> / <kbd>A</kbd> interact</span><span><kbd>1–4</kbd> battle moves</span><span><kbd>C</kbd> throw orb</span><span><kbd>M</kbd> mute</span>
       </div>
       <button class="modal-primary" id="helpDone" type="button">Back to the meadow</button>
+    </div>
+  </section>
+
+  <section id="codeModal" class="modal hidden">
+    <div class="modal-card code-card">
+      <button class="modal-close" id="codeClose" type="button" aria-label="Close access code">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="modal-kicker">ACCESS TERMINAL</div>
+      <h2>Enter code</h2>
+      <p class="modal-sub">The meadow archive accepts a four-digit field code.</p>
+      <form id="codeForm" class="code-form" autocomplete="off">
+        <input id="codeInput" class="code-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000" aria-label="Four digit access code" />
+        <button class="modal-primary" type="submit">Unlock</button>
+      </form>
+      <div id="codeError" class="code-error" role="status" aria-live="polite"></div>
+      <div class="code-hint">Four digits · field archive access</div>
+    </div>
+  </section>
+
+  <section id="adminModal" class="modal hidden">
+    <div class="modal-card admin-card">
+      <button class="modal-close" id="adminClose" type="button" aria-label="Close admin powers">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="admin-head">
+        <div>
+          <div class="modal-kicker">MEADOW CONTROL ROOM</div>
+          <h2>Admin powers</h2>
+          <p class="modal-sub">Seventy live tools for bending the meadow, your team, and the next battle.</p>
+        </div>
+        <div class="admin-count" id="adminCount">70 / 70</div>
+      </div>
+      <div class="admin-toolbar">
+        <input id="adminSearch" class="admin-search" type="search" placeholder="Search powers..." aria-label="Search admin powers" />
+        <div id="adminTabs" class="admin-tabs" aria-label="Power categories"></div>
+      </div>
+      <div id="adminGrid" class="admin-grid"></div>
+      <div id="adminStatus" class="admin-status" role="status" aria-live="polite">Select a power.</div>
     </div>
   </section>
 

@@ -875,7 +875,22 @@ export function buildWorld() {
     { species: 'pebblit', x: -8, z: -24, level: 5, radius: 2.4 },
     { species: 'zephyro', x: -25, z: -20, level: 5, radius: 2.8 },
     { species: 'zephyro', x: 6, z: -30, level: 6, radius: 2.6 },
-    { species: 'emberpaw', x: 8, z: 15, level: 4, radius: 2.2 }
+    { species: 'emberpaw', x: 8, z: 15, level: 4, radius: 2.2 },
+    { species: 'cindercub', x: 11, z: 18, level: 4, radius: 2.2 },
+    { species: 'tidepup', x: 20, z: -12, level: 5, radius: 2.0 },
+    { species: 'mossling', x: 4, z: -8, level: 4, radius: 2.4 },
+    { species: 'voltmoth', x: 21, z: 8, level: 6, radius: 2.4 },
+    { species: 'cragoon', x: 27, z: 5, level: 7, radius: 2.2 },
+    { species: 'breezle', x: -20, z: -24, level: 5, radius: 2.4 },
+    { species: 'frostfawn', x: -30, z: -16, level: 6, radius: 2.6 },
+    { species: 'snowmole', x: -18, z: 12, level: 4, radius: 2.2 },
+    { species: 'emberfly', x: 5, z: 20, level: 5, radius: 2.6 },
+    { species: 'duskpaw', x: 20, z: 0, level: 6, radius: 2.2 },
+    { species: 'wispurr', x: -25, z: -12, level: 6, radius: 2.4 },
+    { species: 'dracoil', x: -12, z: -30, level: 7, radius: 2.4 },
+    { species: 'sparkit', x: 28, z: 10, level: 5, radius: 2.0 },
+    { species: 'petalfin', x: 10, z: -2, level: 5, radius: 2.2 },
+    { species: 'duneshell', x: -6, z: 18, level: 6, radius: 2.4 }
   ]
 
   const pondCircle = { x: POND.x, z: POND.y, r: POND_RADIUS - 0.6 }

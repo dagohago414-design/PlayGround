@@ -383,6 +383,539 @@ const builders = {
   zephyro: buildZephyro
 }
 
+function buildCritter(c, model = {}) {
+  const rig = new THREE.Group()
+  const legs = []
+  const arms = []
+  const wings = []
+  const ears = []
+  const refs = { rig, legs, arms, wings, ears, type: 'biped' }
+  const kind = model.kind || 'quad'
+  const glowColor = c.glow || '#ffd45d'
+  let body
+  let head
+  let tail
+
+  function addEyeStalk(side) {
+    const stalk = new THREE.Group()
+    stalk.position.set(side * 0.16, 0.2, 0.14)
+    stalk.rotation.z = side * 0.18
+    addPart(stalk, new THREE.CylinderGeometry(0.035, 0.045, 0.28, 5), c.body, { position: [0, 0.14, 0] })
+    const eyeBall = addPart(stalk, sphere(0.11, 9), 0xfffdf2, { position: [0, 0.3, 0], noShadow: true, outline: true, outlineScale: 1.04 })
+    addPart(eyeBall, sphere(0.065, 8), c.eye, { position: [0, 0, 0.07], noShadow: true })
+    addPart(eyeBall, sphere(0.02, 6), 0xffffff, { position: [0.03, 0.035, 0.115], noShadow: true })
+    head.add(stalk)
+  }
+
+  function addFace(r, { beak = false, cheeks = false } = {}) {
+    addPart(head, sphere(r * 0.82, 11), c.belly, {
+      position: [0, -r * 0.22, r * 0.58], scale: [1.05, 0.66, 0.5]
+    })
+    eye(head, -r * 0.42, r * 0.08, r * 0.84, { size: 1.08, dark: c.eye })
+    eye(head, r * 0.42, r * 0.08, r * 0.84, { size: 1.08, dark: c.eye })
+    if (beak) {
+      addPart(head, new THREE.ConeGeometry(r * 0.22, r * 0.58, 4), 0xf5a63c, {
+        position: [0, -r * 0.24, r * 1.17], rotation: [Math.PI / 2, 0, 0]
+      })
+    } else {
+      addPart(head, sphere(r * 0.1, 7), c.dark, { position: [0, -r * 0.08, r * 1.18] })
+      smile(head, 0, -r * 0.34, r * 1.08, { w: r * 0.18, mat: c.dark })
+    }
+    if (cheeks) {
+      blush(head, -r * 0.62, -r * 0.12, r * 0.68, c.accent)
+      blush(head, r * 0.62, -r * 0.12, r * 0.68, c.accent)
+    }
+  }
+
+  function addLeg(x, z, scale = 1) {
+    const leg = new THREE.Group()
+    leg.position.set(x, 0.36 * scale, z)
+    addPart(leg, capsule(0.115 * scale, 0.15 * scale, 3, 8), c.body, {
+      position: [0, -0.1 * scale, 0], outline: 'soft', outlineScale: 1.03
+    })
+    addPart(leg, sphere(0.14 * scale, 8), c.belly, {
+      position: [0, -0.22 * scale, 0.04], scale: [1, 0.58, 1.28]
+    })
+    rig.add(leg)
+    legs.push(leg)
+    return leg
+  }
+
+  function addArm(side, scale = 1) {
+    const arm = new THREE.Group()
+    arm.position.set(side * 0.43 * scale, 0.88 * scale, 0.08)
+    arm.rotation.z = side * 0.32
+    addPart(arm, capsule(0.1 * scale, 0.16 * scale, 3, 8), c.body, { position: [0, -0.1, 0], outline: 'soft' })
+    addPart(arm, sphere(0.115 * scale, 7), c.belly, { position: [0, -0.23 * scale, 0.02], scale: [1, 0.8, 1] })
+    rig.add(arm)
+    arms.push(arm)
+    return arm
+  }
+
+  if (kind === 'quad') {
+    body = addPart(rig, sphere(0.46, 13), c.body, { position: [0, 0.72, 0], scale: [1, 0.85, 1.24], outline: true })
+    addPart(rig, sphere(0.37, 12), c.belly, { position: [0, 0.68, 0.3], scale: [0.95, 0.86, 0.55] })
+    head = new THREE.Group()
+    head.position.set(0, 1.3, 0.08)
+    rig.add(head)
+    addPart(head, sphere(0.43, 13), c.body, { outline: true })
+    addFace(0.43, { cheeks: model.cheeks })
+    for (const x of [-0.27, 0.27]) for (const z of [-0.27, 0.3]) addLeg(x, z)
+    tail = new THREE.Group()
+    tail.position.set(0, 0.78, -0.42)
+    rig.add(tail)
+    refs.type = 'quad'
+  } else if (kind === 'biped') {
+    body = addPart(rig, sphere(0.46, 13), c.body, { position: [0, 0.76, 0], scale: [0.98, 1.06, 0.92], outline: true })
+    addPart(rig, sphere(0.36, 12), c.belly, { position: [0, 0.7, 0.29], scale: [0.95, 0.95, 0.55] })
+    head = new THREE.Group()
+    head.position.set(0, 1.34, 0.04)
+    rig.add(head)
+    addPart(head, sphere(0.41, 13), c.body, { outline: true })
+    addFace(0.41, { cheeks: model.cheeks })
+    addLeg(-0.24, 0.04)
+    addLeg(0.24, 0.04)
+    addArm(-1)
+    addArm(1)
+    tail = new THREE.Group()
+    tail.position.set(0, 0.7, -0.4)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'bird') {
+    body = addPart(rig, sphere(0.45, 13), c.body, { position: [0, 0.78, 0], scale: [1, 1.02, 0.94], outline: true })
+    addPart(rig, sphere(0.34, 11), c.belly, { position: [0, 0.72, 0.3], scale: [1, 1, 0.52] })
+    head = new THREE.Group()
+    head.position.set(0, 1.34, 0.06)
+    rig.add(head)
+    addPart(head, sphere(0.4, 13), c.body, { outline: true })
+    addFace(0.4, { beak: true, cheeks: model.cheeks })
+    for (const side of [-1, 1]) {
+      const leg = new THREE.Group()
+      leg.position.set(side * 0.18, 0.38, 0.02)
+      addPart(leg, new THREE.CylinderGeometry(0.045, 0.055, 0.28, 5), 0xf5a63c, { position: [0, -0.1, 0], outline: 'soft' })
+      addPart(leg, new THREE.ConeGeometry(0.09, 0.18, 3), 0xf5a63c, { position: [0, -0.26, 0.06], rotation: [Math.PI / 2, 0, 0] })
+      rig.add(leg)
+      legs.push(leg)
+    }
+    tail = new THREE.Group()
+    tail.position.set(0, 0.8, -0.42)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'bug') {
+    body = addPart(rig, sphere(0.37, 12), c.body, { position: [0, 0.74, -0.06], scale: [0.92, 0.82, 1.55], outline: true })
+    addPart(rig, sphere(0.28, 10), c.belly, { position: [0, 0.66, 0.42], scale: [0.9, 0.7, 1.1] })
+    head = new THREE.Group()
+    head.position.set(0, 0.96, 0.46)
+    rig.add(head)
+    addPart(head, sphere(0.33, 12), c.body, { outline: true })
+    addFace(0.33, { cheeks: model.cheeks })
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const leg = new THREE.Group()
+        leg.position.set(side * 0.32, 0.56, -0.32 + i * 0.3)
+        leg.rotation.z = side * (0.55 + i * 0.06)
+        addPart(leg, new THREE.CylinderGeometry(0.026, 0.035, 0.42, 5), c.dark, { position: [side * 0.15, -0.16, 0] })
+        addPart(leg, sphere(0.06, 7), c.body, { position: [side * 0.3, -0.3, 0] })
+        rig.add(leg)
+        legs.push(leg)
+      }
+    }
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Group()
+      arm.position.set(side * 0.3, 0.78, 0.2)
+      addPart(arm, capsule(0.055, 0.12, 3, 6), c.body, { position: [0, -0.1, 0], rotation: [0, 0, side * 0.4] })
+      rig.add(arm)
+      arms.push(arm)
+    }
+    tail = new THREE.Group()
+    tail.position.set(0, 0.76, -0.55)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'serpent') {
+    const segs = [
+      [0, 0.28, -0.42, 0.35], [0.2, 0.43, -0.16, 0.34], [-0.15, 0.58, 0.08, 0.33], [0.04, 0.76, 0.14, 0.31]
+    ]
+    for (const [x, y, z, r] of segs) {
+      addPart(rig, sphere(r, 11), c.body, { position: [x, y, z], outline: true })
+      addPart(rig, sphere(r * 0.6, 9), c.belly, { position: [x, y - r * 0.1, z + r * 0.62], scale: [1, 0.7, 0.35] })
+    }
+    body = rig.children[0]
+    head = new THREE.Group()
+    head.position.set(0, 1.16, 0.16)
+    rig.add(head)
+    addPart(head, sphere(0.37, 12), c.body, { outline: true })
+    addFace(0.37, { cheeks: model.cheeks })
+    tail = new THREE.Group()
+    tail.position.set(0, 0.24, -0.44)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'blob') {
+    body = addPart(rig, sphere(0.5, 13), c.body, { position: [0, 0.62, 0], scale: [1.08, 0.88, 1], outline: true })
+    addPart(rig, sphere(0.38, 11), c.belly, { position: [0, 0.56, 0.34], scale: [0.95, 0.8, 0.45] })
+    head = new THREE.Group()
+    head.position.set(0, 1.02, 0.06)
+    rig.add(head)
+    addPart(head, sphere(0.38, 12), c.body, { outline: true })
+    addFace(0.38, { cheeks: model.cheeks })
+    addLeg(-0.25, 0.1, 0.75)
+    addLeg(0.25, 0.1, 0.75)
+    addArm(-1, 0.78)
+    addArm(1, 0.78)
+    tail = new THREE.Group()
+    tail.position.set(0, 0.6, -0.46)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'ghost') {
+    body = addPart(rig, sphere(0.46, 13), c.body, { position: [0, 0.88, 0], scale: [1, 1.02, 0.9], outline: true })
+    addPart(rig, sphere(0.35, 11), c.belly, { position: [0, 0.82, 0.3], scale: [0.95, 0.9, 0.5] })
+    for (let i = 0; i < 4; i++) {
+      const wisp = addPart(rig, new THREE.ConeGeometry(0.13 + i * 0.018, 0.46, 5), c.body, {
+        position: [-0.27 + i * 0.18, 0.3 - (i % 2) * 0.08, 0], rotation: [Math.PI, 0, 0.12 * (i - 1.5)]
+      })
+      refs['wisp' + i] = wisp
+    }
+    head = new THREE.Group()
+    head.position.set(0, 1.48, 0.04)
+    rig.add(head)
+    addPart(head, sphere(0.41, 13), c.body, { outline: true })
+    addFace(0.41, { cheeks: model.cheeks })
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Group()
+      arm.position.set(side * 0.42, 0.96, 0.05)
+      arm.rotation.z = side * 0.45
+      addPart(arm, capsule(0.075, 0.12, 3, 6), c.body, { position: [0, -0.12, 0], outline: 'soft' })
+      addPart(arm, sphere(0.085, 7), c.belly, { position: [0, -0.27, 0] })
+      rig.add(arm)
+      arms.push(arm)
+    }
+    tail = new THREE.Group()
+    tail.position.set(0, 0.62, -0.42)
+    rig.add(tail)
+    refs.type = 'biped'
+  } else if (kind === 'crab') {
+    body = addPart(rig, sphere(0.5, 12), c.body, { position: [0, 0.55, 0], scale: [1.32, 0.68, 0.96], outline: true })
+    addPart(rig, sphere(0.38, 10), c.belly, { position: [0, 0.48, 0.3], scale: [1.15, 0.55, 0.5] })
+    head = new THREE.Group()
+    head.position.set(0, 0.98, 0.12)
+    rig.add(head)
+    addPart(head, sphere(0.35, 12), c.body, { outline: true })
+    addFace(0.35, { cheeks: model.cheeks })
+    addEyeStalk(-1)
+    addEyeStalk(1)
+    for (const side of [-1, 1]) {
+      for (const z of [-0.26, 0.26]) addLeg(side * 0.45, z, 0.82)
+      const clawArm = new THREE.Group()
+      clawArm.position.set(side * 0.6, 0.64, 0.28)
+      clawArm.rotation.z = side * 0.3
+      addPart(clawArm, capsule(0.08, 0.12, 3, 7), c.body, { position: [side * 0.1, 0.04, 0], rotation: [0, 0, side * 0.5] })
+      addPart(clawArm, sphere(0.2, 9), c.body, { position: [side * 0.35, 0.18, 0], scale: [1.15, 0.8, 0.75], outline: 'soft' })
+      addPart(clawArm, new THREE.ConeGeometry(0.1, 0.28, 4), c.belly, { position: [side * 0.52, 0.2, 0.09], rotation: [0, 0, side * -1.1] })
+      rig.add(clawArm)
+      arms.push(clawArm)
+    }
+    tail = new THREE.Group()
+    tail.position.set(0, 0.5, -0.46)
+    rig.add(tail)
+    refs.type = 'quad'
+  } else if (kind === 'turtle') {
+    body = addPart(rig, sphere(0.45, 12), c.body, { position: [0, 0.6, 0], scale: [1.08, 0.7, 1.18], outline: true })
+    addPart(rig, sphere(0.5, 12), c.accent, { position: [0, 0.78, -0.05], scale: [1.22, 0.62, 1.18], outline: true })
+    addPart(rig, new THREE.TorusGeometry(0.6, 0.05, 5, 16), c.dark, {
+      position: [0, 0.64, -0.05], rotation: [Math.PI / 2, 0, 0], scale: [1, 1, 0.7]
+    })
+    head = new THREE.Group()
+    head.position.set(0, 0.94, 0.52)
+    rig.add(head)
+    addPart(head, sphere(0.34, 12), c.body, { outline: true })
+    addFace(0.34, { cheeks: model.cheeks })
+    for (const x of [-0.3, 0.3]) for (const z of [-0.2, 0.3]) addLeg(x, z, 0.85)
+    tail = new THREE.Group()
+    tail.position.set(0, 0.52, -0.55)
+    rig.add(tail)
+    refs.type = 'quad'
+  }
+
+  if (model.ears) {
+    for (const side of [-1, 1]) {
+      const ear = new THREE.Group()
+      if (model.ears === 'round') {
+        ear.position.set(side * 0.3, 0.34, -0.02)
+        addPart(ear, sphere(0.16, 9), c.body, { position: [0, 0.02, 0], scale: [0.9, 1, 0.6], outline: true })
+        addPart(ear, sphere(0.09, 8), c.belly, { position: [0, 0.02, 0.08], scale: [1, 1, 0.35] })
+      } else if (model.ears === 'point') {
+        ear.position.set(side * 0.28, 0.34, -0.02)
+        ear.rotation.z = -side * 0.2
+        addPart(ear, new THREE.ConeGeometry(0.16, 0.42, 5), c.body, { position: [0, 0.18, 0], outline: true })
+        addPart(ear, new THREE.ConeGeometry(0.08, 0.25, 4), c.belly, { position: [0, 0.16, 0.06] })
+      } else if (model.ears === 'long') {
+        ear.position.set(side * 0.23, 0.36, -0.04)
+        ear.rotation.z = -side * 0.14
+        addPart(ear, capsule(0.085, 0.3, 3, 7), c.body, { position: [0, 0.25, 0], outline: 'soft' })
+        addPart(ear, capsule(0.045, 0.2, 3, 6), c.belly, { position: [0, 0.25, 0.06] })
+      } else if (model.ears === 'flop') {
+        ear.position.set(side * 0.33, 0.25, 0.02)
+        ear.rotation.z = side * 0.6
+        addPart(ear, sphere(0.18, 9), c.body, { position: [side * 0.12, -0.06, 0], scale: [0.75, 1.2, 0.55], outline: 'soft' })
+      }
+      head.add(ear)
+      ears.push(ear)
+    }
+  }
+
+  if (model.antlers) {
+    for (const side of [-1, 1]) {
+      const antler = new THREE.Group()
+      antler.position.set(side * 0.22, 0.34, -0.02)
+      addPart(antler, new THREE.CylinderGeometry(0.035, 0.05, 0.48, 5), c.dark, { position: [0, 0.22, 0], rotation: [0, 0, side * -0.18] })
+      addPart(antler, new THREE.CylinderGeometry(0.026, 0.035, 0.3, 5), c.belly, { position: [side * -0.12, 0.36, 0.02], rotation: [0, 0, side * 0.7] })
+      addPart(antler, new THREE.CylinderGeometry(0.026, 0.035, 0.26, 5), c.belly, { position: [side * 0.12, 0.46, -0.03], rotation: [0, 0, side * -0.6] })
+      head.add(antler)
+    }
+  }
+
+  if (model.horns === 'dragon') {
+    for (const side of [-1, 1]) {
+      addPart(head, new THREE.ConeGeometry(0.09, 0.46, 5), c.belly, {
+        position: [side * 0.19, 0.3, -0.12], rotation: [-0.62, 0, side * 0.18]
+      })
+    }
+    addPart(head, new THREE.ConeGeometry(0.075, 0.24, 4), c.accent, { position: [0, 0.37, 0.02], rotation: [-0.25, 0, 0] })
+  }
+
+  if (model.cap) {
+    addPart(head, new THREE.SphereGeometry(0.48, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), c.accent, {
+      position: [0, 0.2, -0.03], scale: [1.24, 0.68, 1.18], outline: true
+    })
+    addPart(head, new THREE.CylinderGeometry(0.12, 0.16, 0.22, 7), c.belly, { position: [0, 0.16, -0.04] })
+    for (const [x, z, s] of [[-0.24, 0.18, 0.09], [0.2, 0.26, 0.075], [0.06, -0.25, 0.08]]) {
+      addPart(head, sphere(s, 7), c.belly, { position: [x, 0.38, z], scale: [1, 0.38, 1] })
+    }
+  }
+
+  if (model.crest) {
+    for (let i = 0; i < 3; i++) {
+      addPart(head, new THREE.ConeGeometry(0.065, 0.3 + i * 0.05, 4), i === 1 ? c.accent : c.belly, {
+        position: [0, 0.4, -0.02 - i * 0.1], rotation: [-0.5 - i * 0.14, 0, 0]
+      })
+    }
+  }
+
+  if (model.mane) {
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2
+      addPart(rig, new THREE.ConeGeometry(0.13, 0.32, 4), c.accent, {
+        position: [Math.cos(a) * 0.34, 1.04 + Math.sin(a) * 0.06, Math.sin(a) * 0.34],
+        rotation: [Math.sin(a) * 0.7, 0, -Math.cos(a) * 0.7]
+      })
+    }
+  }
+
+  if (model.collar) {
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2
+      addPart(rig, sphere(0.16, 8), i % 2 ? c.accent : c.belly, {
+        position: [Math.cos(a) * 0.42, 1.02, Math.sin(a) * 0.36], scale: [1, 0.42, 0.7],
+        rotation: [0, -a, 0], outline: 'soft'
+      })
+    }
+  }
+
+  if (model.gills) {
+    for (const side of [-1, 1]) {
+      for (let i = -1; i <= 1; i++) {
+        addPart(head, new THREE.CylinderGeometry(0.007, 0.007, 0.3, 3), c.dark, {
+          position: [side * 0.39, -0.06 + i * 0.06, 0.3], rotation: [0, 0, side * (Math.PI / 2 + i * 0.2)], noShadow: true
+        })
+      }
+    }
+  }
+
+  if (model.antennae) {
+    for (const side of [-1, 1]) {
+      const antenna = new THREE.Group()
+      antenna.position.set(side * 0.14, 0.3, 0.08)
+      antenna.rotation.z = side * 0.34
+      antenna.rotation.x = -0.32
+      addPart(antenna, new THREE.CylinderGeometry(0.012, 0.018, 0.42, 5), c.dark, { position: [0, 0.2, 0], noShadow: true })
+      addPart(antenna, sphere(0.06, 7), c.accent, { position: [0, 0.42, 0], material: new THREE.MeshBasicMaterial({ color: c.accent }), noShadow: true })
+      head.add(antenna)
+    }
+  }
+
+  if (model.halo) {
+    addPart(head, new THREE.TorusGeometry(0.27, 0.025, 5, 18), c.accent, {
+      position: [0, 0.66, 0], rotation: [Math.PI / 2, 0, 0],
+      material: new THREE.MeshBasicMaterial({ color: c.accent }), noShadow: true
+    })
+    const haloGlow = glowSprite(glowColor, 1.3, 0.4)
+    haloGlow.position.set(0, 0.66, 0)
+    head.add(haloGlow)
+  }
+
+  if (model.spots) {
+    const spots = [[-0.22, 0.84, 0.38, 0.1], [0.27, 0.72, 0.34, 0.085], [0.05, 0.9, -0.2, 0.08]]
+    for (const [x, y, z, r] of spots) {
+      addPart(rig, sphere(r, 7), c.belly, { position: [x, y, z], scale: [1, 0.35, 1] })
+    }
+  }
+
+  if (model.claws) {
+    for (const side of [-1, 1]) {
+      addPart(head, new THREE.ConeGeometry(0.035, 0.14, 4), c.belly, {
+        position: [side * 0.16, -0.13, 0.37], rotation: [Math.PI / 2, 0, 0], noShadow: true
+      })
+    }
+  }
+
+  if (model.crystals) {
+    refs.crystals = []
+    for (let i = 0; i < 3; i++) {
+      const shard = addPart(rig, new THREE.ConeGeometry(0.09, 0.32 + i * 0.08, 5), 0x9ee8f5, {
+        position: [-0.18 + i * 0.18, 0.98 - i * 0.02, -0.34],
+        rotation: [-0.4, 0, (i - 1) * 0.25],
+        material: new THREE.MeshStandardMaterial({ color: 0x9ee8f5, emissive: 0x4fc6dc, emissiveIntensity: 0.6, roughness: 0.3, flatShading: true }),
+        noShadow: true
+      })
+      refs.crystals.push(shard)
+    }
+  }
+
+  if (model.tail && tail) {
+    if (model.tail === 'ember') {
+      addPart(tail, sphere(0.2, 10), c.body, { position: [0, 0.08, -0.3], scale: [1, 1.1, 2.2], outline: true })
+      addPart(tail, sphere(0.15, 9), c.belly, { position: [0, 0.28, -0.66], scale: [1, 1.15, 0.9] })
+      refs.flame = addPart(tail, new THREE.ConeGeometry(0.14, 0.46, 6), c.accent, {
+        position: [0, 0.52, -0.72], material: new THREE.MeshBasicMaterial({ color: c.accent }), noShadow: true
+      })
+      refs.flameCore = addPart(tail, new THREE.ConeGeometry(0.07, 0.26, 5), 0xfff4b0, {
+        position: [0, 0.55, -0.7], material: new THREE.MeshBasicMaterial({ color: 0xfff4b0 }), noShadow: true
+      })
+      refs.glow = glowSprite(glowColor, 1.35, 0.6)
+      refs.glow.position.set(0, 0.58, -0.72)
+      tail.add(refs.glow)
+    } else if (model.tail === 'fin') {
+      addPart(tail, sphere(0.2, 9), c.body, { position: [0, -0.02, -0.22], scale: [0.78, 0.5, 1.7], outline: 'soft' })
+      addPart(tail, new THREE.ConeGeometry(0.25, 0.5, 4), c.accent, {
+        position: [0, -0.03, -0.58], rotation: [Math.PI / 2, 0, 0], scale: [1, 1, 0.32]
+      })
+    } else if (model.tail === 'puff') {
+      addPart(tail, sphere(0.23, 9), c.body, { position: [0, 0.06, -0.3], outline: 'soft' })
+      addPart(tail, sphere(0.2, 9), c.belly, { position: [0, 0.14, -0.48], scale: [1, 0.9, 0.8] })
+    } else if (model.tail === 'zig') {
+      addPart(tail, new THREE.CylinderGeometry(0.06, 0.09, 0.3, 5), c.body, { position: [0, 0.06, -0.14], rotation: [1.1, 0, 0] })
+      const zig = [[0, 0.19, -0.32, 0.4, 0.6], [0.05, 0.42, -0.44, 0.1, -0.7], [0, 0.64, -0.54, -0.2, 0.5]]
+      for (const [x, y, z, rx, rz] of zig) {
+        addPart(tail, new THREE.BoxGeometry(0.12, 0.34, 0.12), c.accent, { position: [x, y, z], rotation: [rx, 0, rz], outline: 'soft' })
+      }
+    } else if (model.tail === 'leaf') {
+      addPart(tail, new THREE.ConeGeometry(0.18, 0.5, 5), c.body, { position: [0, 0.05, -0.3], rotation: [-1.1, 0, 0], outline: 'soft' })
+      addPart(tail, sphere(0.25, 9), c.accent, { position: [0, 0.28, -0.62], scale: [1.5, 0.15, 0.7], rotation: [-0.2, 0, 0] })
+      addPart(tail, sphere(0.2, 8), c.belly, { position: [0, 0.22, -0.52], scale: [1.2, 0.12, 0.55], rotation: [-0.2, 0, 0.2] })
+    } else if (model.tail === 'wisp') {
+      addPart(tail, sphere(0.18, 9), c.body, { position: [0, 0.06, -0.2], scale: [1, 0.8, 1.5] })
+      refs.flame = addPart(tail, new THREE.ConeGeometry(0.18, 0.55, 6), c.accent, {
+        position: [0, 0.35, -0.5], rotation: [0.3, 0, 0],
+        material: new THREE.MeshBasicMaterial({ color: c.accent, transparent: true, opacity: 0.72 }), noShadow: true
+      })
+      refs.flameCore = addPart(tail, sphere(0.1, 7), c.belly, {
+        position: [0, 0.38, -0.48], material: new THREE.MeshBasicMaterial({ color: c.belly }), noShadow: true
+      })
+      refs.glow = glowSprite(glowColor, 1.5, 0.5)
+      refs.glow.position.set(0, 0.4, -0.48)
+      tail.add(refs.glow)
+    } else if (model.tail === 'feather') {
+      for (let i = -1; i <= 1; i++) {
+        addPart(tail, new THREE.ConeGeometry(0.09, 0.62, 4), i === 0 ? c.accent : c.belly, {
+          position: [i * 0.13, 0.04, -0.26], rotation: [1.25, 0, i * 0.3]
+        })
+      }
+    } else if (model.tail === 'serpent') {
+      addPart(tail, new THREE.ConeGeometry(0.3, 0.9, 7), c.body, {
+        position: [0, 0.02, -0.35], rotation: [-1.9, 0, 0], outline: 'soft'
+      })
+      addPart(tail, new THREE.ConeGeometry(0.12, 0.42, 5), c.accent, {
+        position: [0, -0.12, -0.72], rotation: [-2.1, 0, 0]
+      })
+    }
+  }
+
+  if (model.wings) {
+    for (const side of [-1, 1]) {
+      const pivot = new THREE.Group()
+      if (model.wings === 'bird') {
+        pivot.position.set(side * 0.38, 0.94, -0.02)
+        addPart(pivot, sphere(0.36, 10), c.accent, {
+          position: [side * 0.28, -0.04, -0.06], scale: [1.25, 0.18, 0.72], rotation: [0, side * 0.18, side * 0.18], outline: 'soft'
+        })
+        addPart(pivot, sphere(0.22, 8), c.belly, { position: [side * 0.3, 0.02, 0.08], scale: [1.1, 0.12, 0.55] })
+      } else {
+        pivot.position.set(side * 0.3, 0.94, -0.12)
+        const wingMat = new THREE.MeshStandardMaterial({
+          color: c.accent, transparent: true, opacity: 0.78, roughness: 0.55, side: THREE.DoubleSide, flatShading: true
+        })
+        for (let i = 0; i < 2; i++) {
+          addPart(pivot, sphere(0.34 - i * 0.07, 9), c.accent, {
+            position: [side * (0.25 + i * 0.12), 0.08 - i * 0.04, -0.05 - i * 0.06],
+            scale: [1.15, 0.1, 0.58 - i * 0.08], rotation: [0, side * 0.35, side * (0.18 + i * 0.25)],
+            material: wingMat.clone(), noShadow: true
+          })
+        }
+        if (model.wings === 'fairy') {
+          addPart(pivot, sphere(0.14, 7), c.belly, {
+            position: [side * 0.18, 0.12, -0.02], scale: [0.9, 0.08, 0.5],
+            material: new THREE.MeshBasicMaterial({ color: c.belly, transparent: true, opacity: 0.6 }), noShadow: true
+          })
+        }
+      }
+      rig.add(pivot)
+      wings.push(pivot)
+    }
+  }
+
+  if (model.sparks) {
+    refs.sparks = []
+    for (let i = 0; i < 2; i++) {
+      const spark = glowSprite('#fff3a0', 0.45, 0.9)
+      spark.position.set(-0.4 + i * 0.8, 1.35 + i * 0.15, 0.25)
+      rig.add(spark)
+      refs.sparks.push(spark)
+    }
+  }
+
+  if (model.glow && !refs.glow) {
+    refs.glow = glowSprite(glowColor, 1.1, 0.35)
+    refs.glow.position.set(0, 1.15, -0.2)
+    rig.add(refs.glow)
+  }
+
+  refs.head = head
+  refs.body = body
+  refs.tail = tail
+  return refs
+}
+
+const critterModels = {
+  cindercub: { kind: 'quad', ears: 'round', tail: 'ember', cheeks: true, mane: true },
+  tidepup: { kind: 'quad', ears: 'flop', tail: 'fin', gills: true, cheeks: true },
+  mossling: { kind: 'quad', cap: true, spots: true, tail: 'puff', cheeks: true },
+  voltmoth: { kind: 'bug', wings: 'moth', antennae: true, spots: true, glow: true },
+  cragoon: { kind: 'crab', claws: true, spots: true },
+  breezle: { kind: 'bird', wings: 'bird', tail: 'feather', beak: true, crest: true },
+  frostfawn: { kind: 'quad', antlers: true, tail: 'puff', spots: true, cheeks: true },
+  snowmole: { kind: 'blob', claws: true, crystals: true, cheeks: true },
+  emberfly: { kind: 'bug', wings: 'fairy', antennae: true, glow: true, sparks: true },
+  duskpaw: { kind: 'quad', ears: 'point', tail: 'wisp', cheeks: true, glow: true },
+  wispurr: { kind: 'ghost', ears: 'point', tail: 'wisp', halo: true, cheeks: true, glow: true },
+  dracoil: { kind: 'serpent', horns: 'dragon', tail: 'serpent', spots: true },
+  sparkit: { kind: 'quad', ears: 'long', tail: 'zig', cheeks: true, sparks: true },
+  petalfin: { kind: 'quad', tail: 'leaf', collar: true, spots: true, cheeks: true },
+  duneshell: { kind: 'turtle', shell: true, tail: 'puff', claws: true }
+}
+
+for (const [id, model] of Object.entries(critterModels)) {
+  builders[id] = colors => buildCritter(colors, model)
+}
+
 export function createCreature(speciesId, { battle = false, scale = 1 } = {}) {
   const species = byId[speciesId]
   if (!species) throw new Error(`Unknown species ${speciesId}`)
